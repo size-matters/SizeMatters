@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <script>
+    $(function() {
+        window.location.href = "/main"
+    })
+  </script>
+
+  <div class="spinner-border" role="status" style="margin: auto;width: 5rem; height: 5rem;">
+    <span class="sr-only">Loading...</span>
+  </div>
+
+{% endblock %}

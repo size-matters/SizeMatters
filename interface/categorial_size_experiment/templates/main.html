@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="instruction">
+        Здравствуйте!
+        <br>
+        Пройдите, пожалуйста, наши опросы.
+        <br>
+        Но сначала расскажите о себе. Нажимая кнопку ясно, вы даёте своё
+        согласие на обработку персональных данных.
+        <br>
+        <form>
+            <label for="age">возраст</label>
+            <br>
+            <input type="number" name="age" required>
+            <br>
+            <label for="gender">гендер</label>
+            <br>
+            <input type="text" name="gender" required>
+            <br>
+
+            Дальше вам нужно отсортировать по размеру объекты.
+            <br>
+            <button
+                type="submit"
+                class="btn first" 
+                onclick="event.preventDefault();chooseSet()">ясно!</button>
+        </form>
+    </div>
+
+{% endblock %}
