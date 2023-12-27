@@ -1,0 +1,86 @@
+---
+title: "Categorical size"
+output: html_document
+date: '2023-01-11'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r import libraries, message=FALSE, warning=FALSE, }
+library(tidyverse)
+library(knitr)
+library(openxlsx)
+```
+
+## Filter data for each language
+```{r}
+read_concept <- function(words, concepts, language_name, filter_pair){
+  words %>% filter(language == language_name) -> words
+  words <- subset(words, is.na(words$f.compound))
+  if (filter_pair == TRUE){
+    concepts <- subset(concepts, is.na(concepts$f.pair))}
+  words <- words[!duplicated(words[c("concept","gender", "category")]),]
+  df = merge(concepts, words, by=c("concept", "category"), all.x=TRUE)
+  df$rank = as.numeric(df$rank)
+  df$gender = as.numeric(df$gender)
+  df %>% 
+    filter(!is.na(gender)) -> df
+
+  return(df)
+}
+```
+
+
+## Compute Mann Whitney
+```{r}
+count_mann_whitney <- function(df){
+  if (length(unique(df$gender)) == 2){
+    test <- wilcox.test(rank ~ gender, data = df, exact=F,
+                        alternative = "greater")
+    return(test$p.value)
+  }
+  else return(NA)
+}
+```
+
+## Aggregate results per language
+```{r}
+aggregate_results <- function(df, language){
+  animal_pvalue <- count_mann_whitney(filter(df, category == "animals"))
+  bodypart_pvalue <- count_mann_whitney(filter(df, category == "bodyparts"))
+  bird_pvalue <- count_mann_whitney(filter(df, category == "birds"))
+  tool_pvalue <- count_mann_whitney(filter(df, category == "utensils"))
+  results <- data.frame(
+    concept=c("animals", "bodyparts", "birds", "utensils"),
+    pvalue=c(animal_pvalue, bodypart_pvalue, bird_pvalue, tool_pvalue),
+    language=language
+  )
+  return(results)
+}
+```
+
+
+```{r  input: LIST OF NOUNS (for a given language)}
+languages <- list("Archi", "Budukh", "Khinalug", "Kryz", "Lak", "Rutul", "Tsakhur")
+
+path_to_data = "../../data/categorial_size_experiment"
+
+words = read.xlsx(file.path(path_to_data, "annotated_data", "cs words.xlsx"))
+concepts = read.xlsx(file.path(path_to_data, "annotated_data", "cs concepts.xlsx"))
+
+joint_df <- data.frame()
+mw_results <- data.frame()
+for (language in languages){
+  df <- read_concept(words, concepts, language, filter_pair = FALSE)
+  results <- aggregate_results(df, language)
+  joint_df <- rbind(joint_df, df)
+  mw_results <- rbind(mw_results, results)
+
+}
+
+write.xlsx(joint_df, file.path(path_to_data, "results", "cs joint.xlsx"))
+write.xlsx(mw_results, file.path(path_to_data, "results", "cs results.xlsx"))
+
+```

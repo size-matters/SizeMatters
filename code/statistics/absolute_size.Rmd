@@ -1,0 +1,104 @@
+---
+title: "Absolute_size"
+output: html_document
+date: '2022-07-04'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r import libraries, message=FALSE, warning=FALSE, }
+library(tidyverse)
+library(knitr)
+library(openxlsx)
+```
+
+## Compute Mann-Whitney Test
+
+``` {r}
+count_mw <- function(table, data){
+  table <- table[c("gender", data)]
+  colnames(table)[2] ="score"
+  
+  table %>% filter(gender=="3") %>%
+    subset(!is.na(score)) -> gender_3
+  table %>% filter(gender=="4") %>%
+    subset(!is.na(score))-> gender_4
+  
+  
+  if(endsWith(data, "big")){
+    alternative <- "greater"}
+  else{
+    alternative <- "less"
+  }
+  
+  test <- wilcox.test(gender_3$score, gender_4$score, alternative=alternative, paired = FALSE, exact = FALSE)
+  return(test$p.value)
+}
+``` 
+
+## Run code for each language
+
+```{r  input: LIST OF NOUNS (for a given language)}
+
+get_data_by_language <- function(words, big_concepts, small_concepts, language_name, filter_animal=FALSE){
+  
+  words %>% filter(language==language_name) -> language_list
+  if (filter_animal == TRUE){
+    big_concepts %>% filter(is.na(animal)) -> big_concepts
+    small_concepts %>% filter(is.na(animal)) -> small_concepts}
+  
+  language_list <- language_list[!duplicated(language_list[c("concept","gender")]),]
+
+  df_small <- merge(small_concepts, language_list, by="concept", all.x=TRUE)
+  df_big <- merge(big_concepts, language_list, by="concept", all.x=TRUE)
+  df <- rbind(df_small, df_big)
+  df <- subset(df, !is.na(language))
+  
+  macabre_big_mw <- count_mw(df_big, "macabre.big")
+  macabre_sm_mw <- count_mw(df_small,"macabre.small")
+  binder_big_mw <- count_mw(df_big, "binder.et.al.big")
+  binder_sm_mw <- count_mw(df_small, "binder.et.al.small")
+  mcrae_big_mw <- count_mw(df_big, "mcrae.et.al.big")
+  mcrae_sm_mw <- count_mw(df_small, "mcrae.et.al.small")
+  
+  
+  results <- data.frame(
+    source=c("macabre.big", "macabre.small", "binder.et.al.big",
+             "binder.et.al.small", "mcrae.et.al.big",
+             "mcrae.et.al.small"),
+    pvalue=c(macabre_big_mw, macabre_sm_mw,
+             binder_big_mw, binder_sm_mw, 
+             mcrae_big_mw, mcrae_sm_mw),
+    language=language_name
+  )
+  return(list(df, results))
+}
+```
+
+```{r}
+languages <- list("Archi", "Budukh", "Khinalug", "Kryz", "Lak", "Rutul", "Tsakhur")
+
+path_to_data = "../../data/absolute_size_experiment"
+
+words = read.xlsx(file.path(path_to_data, "annotated_data", "as words.xlsx"))
+words = filter(words, is.na(f.compound))
+
+concepts = read.xlsx(file.path(path_to_data, "annotated_data", "as concepts.xlsx"))
+big_concepts = filter(concepts, absolute.size=="big")
+small_concepts = filter(concepts, absolute.size=="small")
+
+joint_df <- data.frame()
+results <- data.frame()
+
+for (language in languages) {
+  output <- get_data_by_language(words, big_concepts, small_concepts, language)
+  joint_df <- rbind(joint_df, output[[1]])
+  mw_results <- rbind(mw_results, output[[2]])
+}
+
+write.xlsx(joint_df, file.path(path_to_data, "results", "as joint.xlsx"))
+write.xlsx(mw_results, file.path(path_to_data, "results", "as results.xlsx"))
+
+```
