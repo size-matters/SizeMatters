@@ -1,0 +1,150 @@
+$arrow-color:  #D5BDAF;
+$back-color: #F5EBE0;
+$tile-color: #E3D5CA;
+$default-size: 14pt;
+
+
+@mixin small_screen {
+    @media screen and (max-width: 768px) {
+        font-size: 10pt;
+    }
+}
+
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('../fonts/Roboto-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('../fonts/Roboto-Bold.ttf');
+    font-weight: bold;
+}
+
+body {
+    @include small_screen;
+    font-size: $default-size;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin:0;
+    font-family: 'Roboto';
+}
+
+#start {
+    margin: 0 20px;
+    margin-top: auto;
+    // padding-top: 2em;
+}
+
+#inner-dropzone {
+    min-height: 20vh;
+    text-align: center;
+    white-space: nowrap;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    background-color: $back-color;
+}
+
+#inner-dropzone.drop-active {
+    background-color: darken($back-color, 2%) !important;
+}
+
+.dropzone {
+    background-color: #bfe4ff;
+    border: dashed 4px transparent;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+
+.dragging {
+    opacity: .5;
+    z-index: 2;
+}
+
+.drag-drop {
+    display: block;
+    margin: auto;
+    margin-top: 0.3em;
+    min-width: 60px;
+    padding: 0.5em;
+    text-align: center;
+
+    color: #000;
+    background-color: $tile-color;
+    border: solid 1px #000;
+
+    touch-action: none;
+    transform: translate(0px, 0px);
+
+    transition: background-color 0.3s;
+}
+
+.drag-drop.can-drop {
+    color: #000;
+    font-size: inherit;
+}
+
+.group .drag-drop {
+    border-color: #fff;
+    margin: auto;
+}
+
+.dropzone .group {
+    background-color: $arrow-color;
+    margin: 1rem;
+    padding: 0.5rem;
+    text-align: center;
+    display: inline-block;
+    vertical-align: middle;
+    font-size: inherit;
+}
+
+.group.drop-target {
+    background-color: darken($arrow-color, 20%);
+}
+
+.instruction {
+    text-align: center;
+    font-size: $default-size;
+    width: 50%;
+    margin: auto;
+    @media (max-width: 768px) {
+        width: 75%;
+    }
+    @media (max-width: 425px) {
+        width: 95%;
+    }
+}
+
+.first {
+    margin-top: 1em;
+    font-size: inherit;
+}
+
+.arrow{
+    padding: 1em;
+}
+
+
+.btn {
+    background-color: $arrow-color;
+    font-weight: bold;
+    color: #000;
+    letter-spacing: 3px;
+    font-size: $default-size + 1;
+    border-radius: 0;
+    margin-top: 2em;
+}
+
+.btn:hover {
+    background-color: darken($arrow-color, 40%);
+    color: #fff;
+}
+
+form {
+    margin: 1em;
+}

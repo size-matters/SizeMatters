@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <span id="set" style="display: none;" name="{{ set }}"></span>
+    <div class="arrow" style="position: relative;">
+        <span style="position: absolute;top: 60%;left:6%">маленькое</span>
+        <img src="./static/img/arrow.svg" width="100%">
+        <span style="position: absolute;top: 60%;right: 6%;">большое</span>
+    </div>
+    <div id="inner-dropzone" class="dropzone"></div>
+    <div id="start" class="row">
+        {% for el in data %}
+            <span class="drag-drop">{{ el }}</span>
+        {% endfor %}
+    </div>
+
+    <div class="container" style="margin-left: auto;width: fit-content;margin-right: 0;padding-right: 2em;padding-bottom: 2em;">
+        <button type="button" class="btn" onclick="sendResults()">ГОТОВО</button>
+    </div>
+
+{% endblock %}

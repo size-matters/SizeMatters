@@ -1,0 +1,114 @@
+@font-face {
+  font-family: 'Roboto';
+  src: url("../fonts/Roboto-Regular.ttf"); }
+@font-face {
+  font-family: 'Roboto';
+  src: url("../fonts/Roboto-Bold.ttf");
+  font-weight: bold; }
+body {
+  font-size: 14pt;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Roboto'; }
+  @media screen and (max-width: 768px) {
+    body {
+      font-size: 10pt; } }
+
+#start {
+  margin: 0 20px;
+  margin-top: auto; }
+
+#inner-dropzone {
+  min-height: 20vh;
+  text-align: center;
+  white-space: nowrap;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  background-color: #F5EBE0; }
+
+#inner-dropzone.drop-active {
+  background-color: #f3e6d8 !important; }
+
+.dropzone {
+  background-color: #bfe4ff;
+  border: dashed 4px transparent;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-top: 1rem; }
+
+.dragging {
+  opacity: .5;
+  z-index: 2; }
+
+.drag-drop {
+  display: block;
+  margin: auto;
+  margin-top: 0.3em;
+  min-width: 60px;
+  padding: 0.5em;
+  text-align: center;
+  color: #000;
+  background-color: #E3D5CA;
+  border: solid 1px #000;
+  touch-action: none;
+  transform: translate(0px, 0px);
+  transition: background-color 0.3s; }
+
+.drag-drop.can-drop {
+  color: #000;
+  font-size: inherit; }
+
+.group .drag-drop {
+  border-color: #fff;
+  margin: auto; }
+
+.dropzone .group {
+  background-color: #D5BDAF;
+  margin: 1rem;
+  padding: 0.5rem;
+  text-align: center;
+  display: inline-block;
+  vertical-align: middle;
+  font-size: inherit; }
+
+.group.drop-target {
+  background-color: #b2866c; }
+
+.instruction {
+  text-align: center;
+  font-size: 14pt;
+  width: 50%;
+  margin: auto; }
+  @media (max-width: 768px) {
+    .instruction {
+      width: 75%; } }
+  @media (max-width: 425px) {
+    .instruction {
+      width: 95%; } }
+
+.first {
+  margin-top: 1em;
+  font-size: inherit; }
+
+.arrow {
+  padding: 1em; }
+
+.btn {
+  background-color: #D5BDAF;
+  font-weight: bold;
+  color: #000;
+  letter-spacing: 3px;
+  font-size: 15pt;
+  border-radius: 0;
+  margin-top: 2em; }
+
+.btn:hover {
+  background-color: #79543f;
+  color: #fff; }
+
+form {
+  margin: 1em; }
+
+/*# sourceMappingURL=main.css.map */
