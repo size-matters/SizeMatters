@@ -4,7 +4,7 @@ library(matrixStats)
 library(DescTools)
 library(irrNA)
 
-get_df <- function(tablename, sheetname, daghestanian=FALSE) {
+get_df <- function(tablename, sheetname, daghestanian=F) {
   df <- xlsx::read.xlsx(tablename, sheetName = sheetname)
   if (daghestanian) {
     df %>% 
