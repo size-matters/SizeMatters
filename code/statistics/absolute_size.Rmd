@@ -90,7 +90,7 @@ big_concepts = filter(concepts, absolute.size=="big")
 small_concepts = filter(concepts, absolute.size=="small")
 
 joint_df <- data.frame()
-results <- data.frame()
+mw_results <- data.frame()
 
 for (language in languages) {
   output <- get_data_by_language(words, big_concepts, small_concepts, language)
