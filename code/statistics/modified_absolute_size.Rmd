@@ -13,14 +13,13 @@ library(tidyverse)
 library(knitr)
 library(openxlsx)
 library(stats)
+library(rlist)
 ```
 
 ## Compute Mann-Whitney Test
 
 ```{r}
-grouped_mann_whitney <- function(table) {
-  size_x = 0
-  size_y = 0
+get_u_stats <- function(table, shuffle=FALSE){
   n = 0
   U_x = 0
   U_y = 0
@@ -31,35 +30,52 @@ grouped_mann_whitney <- function(table) {
     lang_table <- lang_table[!is.na(language),]
     
     lang_table$rank <- rank(lang_table$score)
-  
-    lang_table %>% filter(gender=="3") -> gender_3
-    lang_table %>% filter(gender=="4") -> gender_4
+    if (shuffle == TRUE){
+      shuffled_lang_table <- transform(lang_table, rank=sample(rank))
+      shuffled_lang_table %>% filter(gender=="3") -> gender_3
+      shuffled_lang_table %>% filter(gender=="4") -> gender_4}
+    else {
+      lang_table %>% filter(gender=="3") -> gender_3
+      lang_table %>% filter(gender=="4") -> gender_4
+    }
   
 
     X <- gender_3$rank
     Y <- gender_4$rank
   
-    n <- n + length(X) * length(Y)
     n_x <- length(X)
     n_y <- length(Y)
-    size_x <- size_x + n_x
-    size_y <- size_y + n_y
     R_x <- sum(X)
     R_y <- sum(Y)
     u_x = n_x * n_y + (n_x * (n_x +1))/2 - R_x
     u_y = n_x * n_y + (n_y * (n_y +1))/2 - R_y
-    print("Us are correct", u_x + u_y == n_x * n_y)
     U_x <- U_x + u_x
     U_y <- U_y + u_y
+  }
+  u_observed = min(c(U_x, U_y))
+  return (u_observed)
+               
+  }
+```
+
+```{r}
+grouped_mann_whitney <- function(table) {
+    u_observed <- get_u_stats(table)
+    U_list <- list()
+    for (i in 1:10000){
+      u <- get_u_stats(table, TRUE)
+      U_list <- list.append(U_list, u)
     }
-    
-    u = min(c(U_x, U_y))
-    u_table = qwilcox(0.05, size_x, size_y) - 1
-    if (u <= u_table){
-      return ("h_1")
-    } else{
-      return ("h_0")
-    }}
+   # Us <- sort(Us, decreasing = FALSE)
+    lapply(U_list,sort,decreasing=FALSE)
+    for (e in seq_along(U_list)){
+      if (U_list[e] > u_observed){
+        print(e)
+        break
+      }
+    return (e/length(U_list))
+    }
+}
 ```
 
 ``` {r}
