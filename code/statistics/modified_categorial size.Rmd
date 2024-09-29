@@ -1,0 +1,146 @@
+---
+title: "Categorical size"
+output: html_document
+date: '2023-01-11'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r import libraries, message=FALSE, warning=FALSE, }
+library(tidyverse)
+library(knitr)
+library(openxlsx)
+```
+
+## Filter data for each language
+```{r}
+read_concept <- function(words, concepts, filter_pair){
+  words <- subset(words, is.na(words$f.compound))
+  if (filter_pair == TRUE){
+    concepts <- subset(concepts, is.na(concepts$f.pair))}
+  words <- words[!duplicated(words[c("concept","gender", "category")]),]
+  df = merge(concepts, words, by=c("concept", "category"), all.x=TRUE)
+  df$rank = as.numeric(df$rank)
+  df$gender = as.numeric(df$gender)
+  df %>% 
+    filter(!is.na(gender)) -> df
+
+  return(df)
+}
+```
+
+
+## Compute Mann Whitney
+```{r}
+get_u_stats <- function(table, shuffle=FALSE){
+  n = 0
+  U_x = 0
+  U_y = 0
+  langs = unique(table$language)
+  for (lang in langs){
+    
+    lang_table <- table[table$language == lang,]
+    lang_table <- lang_table[!is.na(lang_table$language),]
+    
+    lang_table$rank <- rank(lang_table$score)
+    if (shuffle == TRUE){
+      shuffled_lang_table <- transform(lang_table, rank=sample(rank))
+      shuffled_lang_table %>% filter(gender=="3") -> gender_3
+      shuffled_lang_table %>% filter(gender=="4") -> gender_4}
+    else {
+      lang_table %>% filter(gender=="3") -> gender_3
+      lang_table %>% filter(gender=="4") -> gender_4
+    }
+  
+
+    X <- gender_3$rank
+    Y <- gender_4$rank
+  
+    n_x <- length(X)
+    n_y <- length(Y)
+    R_x <- sum(X)
+    R_y <- sum(Y)
+    u_x = n_x * n_y + (n_x * (n_x +1))/2 - R_x
+    u_y = n_x * n_y + (n_y * (n_y +1))/2 - R_y
+    U_x <- U_x + u_x
+    U_y <- U_y + u_y
+  }
+  u_observed = min(c(U_x, U_y))
+  return (u_observed)
+               
+  }
+
+
+grouped_mann_whitney <- function(table, data) {
+    u_observed <- get_u_stats(table)
+    U_list <- list()
+    for (i in 1:10000){
+      u <- get_u_stats(table, TRUE)
+      U_list <- list.append(U_list, u)
+    }
+   # Us <- sort(Us, decreasing = FALSE)
+    U_list <- lapply(U_list,sort,decreasing=TRUE)
+    num = 0
+    for (e in seq_along(U_list)){
+      if (U_list[e] >= u_observed){
+        num = num + 1
+      }}
+   # plot(U_list)
+    df <- ldply (U_list, data.frame)
+    colnames(df) <- c("number")
+    p <- ggplot(df, aes(x=number)) + geom_density() + geom_vline(aes(xintercept=u_observed), color="blue", linetype="dashed", linewidth=1)
+    ggsave(p, 
+       filename = sprintf("%s.pdf", data),
+       device = "pdf",
+       height = 6, width = 5, units = "in")
+    return (num/length(U_list))
+}
+
+
+count_mw <- function(table, data){
+  table <- table[c("gender", "language", "rank")]
+  colnames(table)[3] ="score"
+  table <- table[!is.na(table$score),]
+  
+  test <- grouped_mann_whitney(table, data)
+  return(test)
+}
+```
+
+## Aggregate results per language
+```{r}
+aggregate_results <- function(df){
+  animal_pvalue <- count_mw(filter(df, category == "animals"), "animals")
+  bodypart_pvalue <- count_mw(filter(df, category == "bodyparts"), "bodyparts")
+  bird_pvalue <- count_mw(filter(df, category == "birds"), "birds")
+  tool_pvalue <- count_mw(filter(df, category == "utensils"), "utensils")
+  print(c(animal_pvalue, bodypart_pvalue, bird_pvalue, tool_pvalue))
+  results <- data.frame(
+    concept=c("animals", "bodyparts", "birds", "utensils"),
+    pvalue=c(animal_pvalue, bodypart_pvalue, bird_pvalue, tool_pvalue)
+  )
+  return(results)
+}
+```
+
+
+```{r  input: LIST OF NOUNS (for a given language)}
+path_to_data = "../../data/categorial_size_experiment"
+
+words = read.xlsx(file.path(path_to_data, "annotated_data", "cs words.xlsx"))
+concepts = read.xlsx(file.path(path_to_data, "annotated_data", "cs concepts.xlsx"))
+
+joint_df <- data.frame()
+mw_results <- data.frame()
+df <- read_concept(words, concepts, filter_pair = FALSE)
+results <- aggregate_results(df)
+joint_df <- rbind(joint_df, df)
+mw_results <- rbind(mw_results, results)
+
+
+write.xlsx(joint_df, file.path(path_to_data, "results", "cs joint.xlsx"))
+write.xlsx(mw_results, file.path(path_to_data, "results", "cs results.xlsx"))
+
+```

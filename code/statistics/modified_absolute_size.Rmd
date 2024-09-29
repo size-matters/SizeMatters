@@ -14,6 +14,9 @@ library(knitr)
 library(openxlsx)
 library(stats)
 library(rlist)
+library(plyr)
+library(ggplot2)
+library(dplyr)
 ```
 
 ## Compute Mann-Whitney Test
@@ -27,7 +30,7 @@ get_u_stats <- function(table, shuffle=FALSE){
   for (lang in langs){
     
     lang_table <- table[table$language == lang,]
-    lang_table <- lang_table[!is.na(language),]
+    lang_table <- lang_table[!is.na(lang_table$language),]
     
     lang_table$rank <- rank(lang_table$score)
     if (shuffle == TRUE){
@@ -52,14 +55,15 @@ get_u_stats <- function(table, shuffle=FALSE){
     U_x <- U_x + u_x
     U_y <- U_y + u_y
   }
-  u_observed = min(c(U_x, U_y))
+  #u_observed = min(c(U_x, U_y))
+  u_observed = U_x
   return (u_observed)
                
   }
 ```
 
 ```{r}
-grouped_mann_whitney <- function(table) {
+grouped_mann_whitney <- function(table, data) {
     u_observed <- get_u_stats(table)
     U_list <- list()
     for (i in 1:10000){
@@ -67,14 +71,21 @@ grouped_mann_whitney <- function(table) {
       U_list <- list.append(U_list, u)
     }
    # Us <- sort(Us, decreasing = FALSE)
-    lapply(U_list,sort,decreasing=FALSE)
+    U_list <- lapply(U_list,sort,decreasing=TRUE)
+    num = 0
     for (e in seq_along(U_list)){
-      if (U_list[e] > u_observed){
-        print(e)
-        break
-      }
-    return (e/length(U_list))
-    }
+      if (U_list[e] >= u_observed){
+        num = num + 1
+      }}
+   # plot(U_list)
+    df <- ldply (U_list, data.frame)
+    colnames(df) <- c("number")
+    p <- ggplot(df, aes(x=number)) + geom_density() + geom_vline(aes(xintercept=u_observed), color="blue", linetype="dashed", linewidth=1)
+    ggsave(p, 
+       filename = sprintf("%s.pdf", data),
+       device = "pdf",
+       height = 6, width = 5, units = "in")
+    return (num/length(U_list))
 }
 ```
 
@@ -84,7 +95,7 @@ count_mw <- function(table, data){
   colnames(table)[3] ="score"
   table <- table[!is.na(table$score),]
   
-  test <- grouped_mann_whitney(table)
+  test <- grouped_mann_whitney(table, data)
   return(test)
 }
 ``` 
@@ -148,5 +159,4 @@ mw_results <- rbind(mw_results, output[[2]])
 
 write.xlsx(joint_df, file.path(path_to_data, "results", "as joint.xlsx"))
 write.xlsx(mw_results, file.path(path_to_data, "results", "as results.xlsx"))
-
 ```
