@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(knitr)
 library(openxlsx)
+library(rlist)
+library(plyr)
 ```
 
 ## Filter data for each language
@@ -67,32 +69,35 @@ get_u_stats <- function(table, shuffle=FALSE){
     U_x <- U_x + u_x
     U_y <- U_y + u_y
   }
-  u_observed = min(c(U_x, U_y))
-  return (u_observed)
+  #u_observed = min(c(U_x, U_y))
+  u_observed = U_x
+  n = U_x + U_y
+  return (c(u_observed,n))
                
   }
 
 
-grouped_mann_whitney <- function(table, data) {
-    u_observed <- get_u_stats(table)
+grouped_mann_whitney <- function(table, name) {
+    output <- get_u_stats(table)
+    u_observed <- output[1]
+    n <- output[2]
     U_list <- list()
+    num = 0
     for (i in 1:10000){
-      u <- get_u_stats(table, TRUE)
-      U_list <- list.append(U_list, u)
+      output <- get_u_stats(table, TRUE)
+      u <- output[1]
+      if (u >= u_observed){
+        num = num + 1
+      }
+      U_list <- list.append(U_list, u/n)
     }
    # Us <- sort(Us, decreasing = FALSE)
     U_list <- lapply(U_list,sort,decreasing=TRUE)
-    num = 0
-    for (e in seq_along(U_list)){
-      if (U_list[e] >= u_observed){
-        num = num + 1
-      }}
-   # plot(U_list)
     df <- ldply (U_list, data.frame)
     colnames(df) <- c("number")
-    p <- ggplot(df, aes(x=number)) + geom_density() + geom_vline(aes(xintercept=u_observed), color="blue", linetype="dashed", linewidth=1)
+    p <- ggplot(df, aes(x=number)) + geom_density() + geom_vline(aes(xintercept=u_observed/n), color="blue", linetype="dashed", linewidth=1) + xlab("Proportion of pairs 3 > 4")
     ggsave(p, 
-       filename = sprintf("%s.pdf", data),
+       filename = sprintf("%s.pdf", name),
        device = "pdf",
        height = 6, width = 5, units = "in")
     return (num/length(U_list))
@@ -111,11 +116,11 @@ count_mw <- function(table, data){
 
 ## Aggregate results per language
 ```{r}
-aggregate_results <- function(df){
-  animal_pvalue <- count_mw(filter(df, category == "animals"), "animals")
-  bodypart_pvalue <- count_mw(filter(df, category == "bodyparts"), "bodyparts")
-  bird_pvalue <- count_mw(filter(df, category == "birds"), "birds")
-  tool_pvalue <- count_mw(filter(df, category == "utensils"), "utensils")
+aggregate_results <- function(df,name){
+  animal_pvalue <- count_mw(filter(df, category == "animals"), sprintf("animals_%s", name))
+  bodypart_pvalue <- count_mw(filter(df, category == "bodyparts"), sprintf("bodyparts_%s", name))
+  bird_pvalue <- count_mw(filter(df, category == "birds"), sprintf("birds_%s", name))
+  tool_pvalue <- count_mw(filter(df, category == "utensils"), sprintf("utensils_%s", name))
   print(c(animal_pvalue, bodypart_pvalue, bird_pvalue, tool_pvalue))
   results <- data.frame(
     concept=c("animals", "bodyparts", "birds", "utensils"),
@@ -132,15 +137,32 @@ path_to_data = "../../data/categorial_size_experiment"
 words = read.xlsx(file.path(path_to_data, "annotated_data", "cs words.xlsx"))
 concepts = read.xlsx(file.path(path_to_data, "annotated_data", "cs concepts.xlsx"))
 
-joint_df <- data.frame()
-mw_results <- data.frame()
-df <- read_concept(words, concepts, filter_pair = FALSE)
-results <- aggregate_results(df)
-joint_df <- rbind(joint_df, df)
-mw_results <- rbind(mw_results, results)
+archi_joint_df <- data.frame()
+archi_mw_results <- data.frame()
+
+non_archi_joint_df <- data.frame()
+non_archi_mw_results <- data.frame()
+
+archi <- words[words$language == "Archi",]
+non_archi <- words[words$language != "Archi",]
+
+archi_df <- read_concept(archi, concepts, filter_pair = FALSE)
+archi_results <- aggregate_results(archi_df, "archi")
+archi_joint_df <- rbind(archi_joint_df, archi_df)
+archi_mw_results <- rbind(archi_mw_results, archi_results)
+
+non_archi_df <- read_concept(non_archi, concepts, filter_pair = FALSE)
+non_archi_results <- aggregate_results(non_archi_df, "non_archi")
+non_archi_joint_df <- rbind(non_archi_joint_df, non_archi_df)
+non_archi_mw_results <- rbind(non_archi_mw_results, non_archi_results)
 
 
-write.xlsx(joint_df, file.path(path_to_data, "results", "cs joint.xlsx"))
-write.xlsx(mw_results, file.path(path_to_data, "results", "cs results.xlsx"))
+write.xlsx(archi_joint_df, file.path(path_to_data, "results", "cs joint archi.xlsx"))
+write.xlsx(archi_mw_results, file.path(path_to_data, "results", "cs results archi.xlsx"))
+
+
+write.xlsx(non_archi_joint_df, file.path(path_to_data, "results", "cs joint non archi.xlsx"))
+write.xlsx(non_archi_mw_results, file.path(path_to_data, "results", "cs results non archi.xlsx"))
+
 
 ```
