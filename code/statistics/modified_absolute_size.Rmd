@@ -64,13 +64,13 @@ get_u_stats <- function(table, shuffle=FALSE){
 ```
 
 ```{r}
-grouped_mann_whitney <- function(table, name) {
+grouped_mann_whitney <- function(table, name, iter) {
     output <- get_u_stats(table)
     u_observed <- output[1]
     n <- output[2]
     U_list <- list()
     num = 0
-    for (i in 1:10000){
+    for (i in 1:iter){
       output <- get_u_stats(table, TRUE)
       u <- output[1]
       if (u >= u_observed){
@@ -92,13 +92,13 @@ grouped_mann_whitney <- function(table, name) {
 ```
 
 ``` {r}
-count_mw <- function(table, data, name){
+count_mw <- function(table, data, name, iter){
   table <- table[c("gender", "language", data)]
   colnames(table)[3] ="score"
   table <- table[!is.na(table$score),]
   
-  test <- grouped_mann_whitney(table, sprintf("%s_%s", data, name))
-  return(test)
+  test <- grouped_mann_whitney(table, sprintf("%s_%s", data, name), iter)
+  return(1-test)
 }
 ``` 
 
@@ -107,7 +107,7 @@ count_mw <- function(table, data, name){
 
 ```{r  input: LIST OF NOUNS (for a given language)}
 
-get_data <- function(words, big_concepts, small_concepts, name, filter_animal=FALSE){
+get_data <- function(words, big_concepts, small_concepts, name, iter, filter_animal=FALSE){
   
   if (filter_animal == TRUE){
     big_concepts %>% filter(is.na(animal)) -> big_concepts
@@ -121,12 +121,12 @@ get_data <- function(words, big_concepts, small_concepts, name, filter_animal=FA
   df <- subset(df, !is.na(language))
   
   
-  macabre_big_mw <- count_mw(df_big, "macabre.big", name)
-  macabre_sm_mw <- count_mw(df_small, "macabre.small", name)
-  binder_big_mw <- count_mw(df_big, "binder.et.al.big", name)
-  binder_sm_mw <- count_mw(df_small, "binder.et.al.small", name)
-  mcrae_big_mw <- count_mw(df_big, "mcrae.et.al.big", name)
-  mcrae_sm_mw <- count_mw(df_small, "mcrae.et.al.small", name)
+  macabre_big_mw <- count_mw(df_big, "macabre.big", name, iter)
+  macabre_sm_mw <- count_mw(df_small, "macabre.small", name, iter)
+  binder_big_mw <- count_mw(df_big, "binder.et.al.big", name, iter)
+  binder_sm_mw <- count_mw(df_small, "binder.et.al.small", name, iter)
+  mcrae_big_mw <- count_mw(df_big, "mcrae.et.al.big", name, iter)
+  mcrae_sm_mw <- count_mw(df_small, "mcrae.et.al.small", name, iter)
   
   results <- data.frame(
     source=c("macabre.big", "macabre.small", 
@@ -160,12 +160,14 @@ archi_mw_results <- data.frame()
 
 nonarhci_joint_df <- data.frame()
 nonarchi_mw_results <- data.frame()
-
-archi_output <- get_data(archi, big_concepts, small_concepts, name="archi")
+for (x in c("A", "B")){
+  for (i in c(1000, 5000, 10000)){
+  archi_output <- get_data(archi, big_concepts, small_concepts, name=sprintf("archi_%s_%s", x, as.character(i)), i)
 #archi_joint_df <- rbind(archi_joint_df, archi_output[[1]])
 #archi_mw_results <- rbind(archi_mw_results, archi_output[[2]])
 
-nonarchi_output <- get_data(nonarchi, big_concepts, small_concepts, name="nonarchi")
+  nonarchi_output <- get_data(nonarchi, big_concepts, small_concepts, name=sprintf("nonarchi_%s_%s", x, as.character(i)), i)
+}}
 #nonarchi_joint_df <- rbind(nonarchi_joint_df, nonarchi_output[[1]])
 #nonarchi_mw_results <- rbind(nonarchi_mw_results, nonarchi_output[[2]])
 
