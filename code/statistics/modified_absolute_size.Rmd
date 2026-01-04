@@ -76,13 +76,13 @@ grouped_mann_whitney <- function(table, name, iter) {
       if (u >= u_observed){
         num = num + 1
       }
-      U_list <- list.append(U_list, u/n)
+      U_list <- list.append(U_list, 1-u/n)
     }
    # Us <- sort(Us, decreasing = FALSE)
     U_list <- lapply(U_list,sort,decreasing=TRUE)
     df <- ldply (U_list, data.frame)
     colnames(df) <- c("number")
-    p <- ggplot(df, aes(x=number)) + geom_density() + geom_vline(aes(xintercept=u_observed/n), color="blue", linetype="dashed", linewidth=1) + xlab("Proportion of pairs 3 > 4")
+    p <- ggplot(df, aes(x=number)) + geom_density() + geom_vline(aes(xintercept=1-u_observed/n), color="blue", linetype="dashed", linewidth=1) + xlab("Proportion of pairs 3 > 4")
     ggsave(p, 
        filename = sprintf("%s.pdf", name),
        device = "pdf",
@@ -113,7 +113,7 @@ get_data <- function(words, big_concepts, small_concepts, name, iter, filter_ani
     big_concepts %>% filter(is.na(animal)) -> big_concepts
     small_concepts %>% filter(is.na(animal)) -> small_concepts}
   
-  words <- words[!duplicated(words[c("concept","gender")]),]
+  words <- words[!duplicated(words[c("concept","gender", "language")]),]
 
   df_small <- merge(small_concepts, words, by="concept", all.x=TRUE)
   df_big <- merge(big_concepts, words, by="concept", all.x=TRUE)
@@ -167,15 +167,14 @@ for (x in c("A", "B")){
 #archi_mw_results <- rbind(archi_mw_results, archi_output[[2]])
 
   nonarchi_output <- get_data(nonarchi, big_concepts, small_concepts, name=sprintf("nonarchi_%s_%s", x, as.character(i)), i)
+  
+  write.xlsx(archi_output[[1]], file.path(path_to_data, "results",  sprintf("%s_%s_as joint archi.xlsx", x, as.character(i))))
+    write.xlsx(archi_output[[2]], file.path(path_to_data, "results", sprintf("%s_%s_as results archi.xlsx", x, as.character(i))))
+    
+    write.xlsx(nonarchi_output[[1]], file.path(path_to_data, "results", sprintf("%s_%s_cs joint non archi.xlsx", x, as.character(i))))
+    write.xlsx(nonarchi_output[[2]], file.path(path_to_data, "results", sprintf("%s_%s_cs results non archi.xlsx", x, as.character(i))))
 }}
 #nonarchi_joint_df <- rbind(nonarchi_joint_df, nonarchi_output[[1]])
 #nonarchi_mw_results <- rbind(nonarchi_mw_results, nonarchi_output[[2]])
 
-
-
-write.xlsx(archi_output[[1]], file.path(path_to_data, "results", "as joint archi.xlsx"))
-write.xlsx(archi_output[[2]], file.path(path_to_data, "results", "as results archi.xlsx"))
-
-write.xlsx(nonarchi_output[[1]], file.path(path_to_data, "results", "as joint non archi.xlsx"))
-write.xlsx(nonarchi_output[[2]], file.path(path_to_data, "results", "as results non archi.xlsx"))
 ```

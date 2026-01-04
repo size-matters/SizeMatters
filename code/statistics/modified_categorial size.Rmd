@@ -22,7 +22,7 @@ read_concept <- function(words, concepts, filter_pair){
   words <- subset(words, is.na(words$f.compound))
   if (filter_pair == TRUE){
     concepts <- subset(concepts, is.na(concepts$f.pair))}
-  words <- words[!duplicated(words[c("concept","gender", "category")]),]
+  words <- words[!duplicated(words[c("concept","gender", "category", "language")]),]
   df = merge(concepts, words, by=c("concept", "category"), all.x=TRUE)
   df$rank = as.numeric(df$rank)
   df$gender = as.numeric(df$gender)
@@ -89,7 +89,7 @@ grouped_mann_whitney <- function(table, name, iter) {
       if (u >= u_observed){
         num = num + 1
       }
-      U_list <- list.append(U_list, u/n)
+      U_list <- list.append(U_list, 1-u/n)
     }
    # Us <- sort(Us, decreasing = FALSE)
     U_list <- lapply(U_list,sort,decreasing=TRUE)
@@ -140,8 +140,6 @@ concepts = read.xlsx(file.path(path_to_data, "annotated_data", "cs concepts.xlsx
 archi_joint_df <- data.frame()
 archi_mw_results <- data.frame()
 
-non_archi_joint_df <- data.frame()
-non_archi_mw_results <- data.frame()
 
 archi <- words[words$language == "Archi",]
 non_archi <- words[words$language != "Archi",]
@@ -151,20 +149,16 @@ non_archi_df <- read_concept(non_archi, concepts, filter_pair = FALSE)
 for (x in c("A", "B")){
   for (i in c(1000, 5000, 10000)){
     archi_results <- aggregate_results(archi_df, sprintf("archi_%s", x), i)
-    archi_joint_df <- rbind(archi_joint_df, archi_df)
-    archi_mw_results <- rbind(archi_mw_results, archi_results)
+   # archi_joint_df <- rbind(archi_joint_df, archi_df)
     
     non_archi_results <- aggregate_results(non_archi_df, sprintf("non_archi_%s", x), i)
-    non_archi_joint_df <- rbind(non_archi_joint_df, non_archi_df)
-    non_archi_mw_results <- rbind(non_archi_mw_results, non_archi_results)
+    #non_archi_joint_df = rbind(non_archi_joint_df, non_archi_df)
     
-
+    write.xlsx(archi_df, file.path(path_to_data, "results",  sprintf("%s_%s_cs joint archi.xlsx", x, as.character(i))))
+    write.xlsx(archi_results, file.path(path_to_data, "results", sprintf("%s_%s_cs results archi.xlsx", x, as.character(i))))
     
-    write.xlsx(archi_joint_df, file.path(path_to_data, "results",  sprintf("%s_%s_cs joint archi.xlsx", x, as.character(i))))
-    write.xlsx(archi_mw_results, file.path(path_to_data, "results", sprintf("%s_%s_cs results archi.xlsx", x, as.character(i))))
-    
-    write.xlsx(non_archi_joint_df, file.path(path_to_data, "results", sprintf("%s_%s_cs joint non archi.xlsx", x, as.character(i))))
-    write.xlsx(non_archi_mw_results, file.path(path_to_data, "results", sprintf("%s_%s_cs results non archi.xlsx", x, as.character(i))))
+    write.xlsx(non_archi_df, file.path(path_to_data, "results", sprintf("%s_%s_cs joint non archi.xlsx", x, as.character(i))))
+    write.xlsx(non_archi_results, file.path(path_to_data, "results", sprintf("%s_%s_cs results non archi.xlsx", x, as.character(i))))
   }
 }
 
